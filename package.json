@@ -1,0 +1,17 @@
+{
+  "name": "timeout-monitor",
+  "version": "0.1.0",
+  "description": "Monitor setTimeout and setInterval to help detect uncleared timers",
+  "main": "src/timeout-monitor.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "keywords": [
+    "setTimeout"
+  ],
+  "author": "borilla",
+  "license": "MIT",
+  "dependencies": {
+    "jest": "^23.6.0"
+  }
+}
