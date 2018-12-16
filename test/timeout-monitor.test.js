@@ -122,6 +122,86 @@ describe('timeout-monitor', () => {
 			});
 		});
 
+		describe('then setTimeout is called', () => {
+			const timeout = 500, arg1 = 'foo', arg2 = 'bar';
+			let callback, timeoutId, wrappedCallback;
+
+			beforeEach(() => {
+				callback = jest.fn();
+				timeoutId = mockWindow.setTimeout(callback, timeout, arg1, arg2);
+				wrappedCallback = setTimeout.mock.calls[0][0];
+			});
+
+			it('calls the original setTimeout function', () => {
+				expect(setTimeout).toHaveBeenCalledTimes(1);
+			});
+
+			it('calls the original setTimeout function wth a wrapped callback', () => {
+				expect(wrappedCallback).toBeInstanceOf(Function);
+				expect(wrappedCallback).not.toEqual(callback);
+				expect(setTimeout).toHaveBeenCalledWith(wrappedCallback, timeout, arg1, arg2);
+			});
+
+			it('returns the timeout ID from the original function', () => {
+				const returnVal = setTimeout.mock.results[0].value;
+				expect(timeoutId).toEqual(returnVal);
+			});
+
+			it('adds the returned timeout ID to uncleared timeouts', () => {
+				expect(timeoutMonitor.report().timeouts).toEqual([ timeoutId ]);
+			});
+
+			describe('when the timeout triggers (after interval ms)', () => {
+				beforeEach(() => {
+					wrappedCallback(arg1, arg2);
+				});
+
+				it('calls the original callback function', ()=> {
+					expect(callback).toHaveBeenCalledTimes(1);
+				});
+
+				it('passes call args to original callback', () => {
+					expect(callback).toHaveBeenCalledWith(arg1, arg2);
+				});
+
+				it('removes the timeout ID from uncleared timeouts', () => {
+					expect(timeoutMonitor.report().timeouts).toEqual([]);
+				});
+			});
+
+			describe('then clearTimeout is called with the returned timeout ID', () => {
+				beforeEach(() => {
+					mockWindow.clearTimeout(timeoutId);
+				});
+
+				it('calls the original clearTimeout function', () => {
+					expect(clearTimeout).toHaveBeenCalledTimes(1);
+					expect(clearTimeout).toHaveBeenCalledWith(timeoutId);
+				});
+
+				it('removes the timeout ID from uncleared timeouts', () => {
+					expect(timeoutMonitor.report().timeouts).toEqual([]);
+				});
+			});
+
+			describe('then clearTimeout is called with an unknown timeout ID', () => {
+				const unknownTimeoutId = 9999;
+
+				beforeEach(() => {
+					mockWindow.clearTimeout(unknownTimeoutId);
+				});
+
+				it('still calls the original clearTimeout function', () => {
+					expect(clearTimeout).toHaveBeenCalledTimes(1);
+					expect(clearTimeout).toHaveBeenCalledWith(unknownTimeoutId);
+				});
+
+				it('does not change uncleared timeouts', () => {
+					expect(timeoutMonitor.report().timeouts).toEqual([ timeoutId ]);
+				});
+			});
+		});
+
 		describe('then restore is called', () => {
 			beforeEach(() => {
 				timeoutMonitor.restore();
