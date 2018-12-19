@@ -33,8 +33,8 @@ TimeoutMonitor.prototype.restore = function () {
 
 TimeoutMonitor.prototype.report = function () {
 	return {
-		intervals: this._intervalIds,
-		timeouts: this._timeoutIds
+		intervals: Array.from(this._intervalIds.keys()),
+		timeouts: Array.from(this._timeoutIds.keys())
 	};
 };
 
@@ -45,8 +45,8 @@ TimeoutMonitor.prototype._reset = function () {
 	this._originalClearInterval = null;
 	this._originalSetTimeout = null;
 	this._originalClearTimeout = null;
-	this._intervalIds = [];
-	this._timeoutIds = [];
+	this._intervalIds = new Map();
+	this._timeoutIds = new Map();
 };
 
 TimeoutMonitor.prototype._monitorIntervals = function () {
@@ -54,12 +54,12 @@ TimeoutMonitor.prototype._monitorIntervals = function () {
 
 	monitor._window.setInterval = function (/* callback, interval, ...args */) {
 		const intervalId = monitor._originalSetInterval.apply(this, arguments);
-		monitor._intervalIds.push(intervalId);
+		monitor._intervalIds.set(intervalId);
 		return intervalId;
 	};
 
 	monitor._window.clearInterval = function (intervalId) {
-		removeFromArrayInPlace(monitor._intervalIds, intervalId);
+		monitor._intervalIds.delete(intervalId);
 		monitor._originalClearInterval.apply(this, arguments);
 	};
 };
@@ -69,16 +69,16 @@ TimeoutMonitor.prototype._monitorTimeouts = function () {
 
 	monitor._window.setTimeout = function (callback, ...otherArgs) {
 		function newCallback () {
-			removeFromArrayInPlace(monitor._timeoutIds, timeoutId);
+			monitor._timeoutIds.delete(timeoutId);
 			callback.apply(this, arguments);
 		}
 		const timeoutId = monitor._originalSetTimeout.apply(this, [newCallback, ...otherArgs]);
-		monitor._timeoutIds.push(timeoutId);
+		monitor._timeoutIds.set(timeoutId);
 		return timeoutId;
 	}
 
 	monitor._window.clearTimeout = function (timeoutId) {
-		removeFromArrayInPlace(monitor._timeoutIds, timeoutId);
+		monitor._timeoutIds.delete(timeoutId);
 		monitor._originalClearTimeout.apply(this, arguments);
 	}
 };
