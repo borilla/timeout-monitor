@@ -85,8 +85,14 @@ describe('timeout-monitor', () => {
 				expect(intervalId).toEqual(returnVal);
 			});
 
-			it('adds the returned interval ID to uncleared intervals', () => {
-				expect(timeoutMonitor.report().intervals).toEqual([ intervalId ]);
+			it('adds the returned interval to uncleared intervals', () => {
+				expect(timeoutMonitor.report().intervals).toEqual([
+					[ intervalId, {
+						line: expect.any(Number),
+						char: expect.any(Number),
+						file: 'test/timeout-monitor.test.js'
+					}]
+				]);
 			});
 
 			describe('then clearInterval is called with the returned interval ID', () => {
@@ -99,7 +105,7 @@ describe('timeout-monitor', () => {
 					expect(clearInterval).toHaveBeenCalledWith(intervalId);
 				});
 
-				it('removes the interval ID from uncleared intervals', () => {
+				it('removes the interval from uncleared intervals', () => {
 					expect(timeoutMonitor.report().intervals).toEqual([]);
 				});
 			});
@@ -117,7 +123,13 @@ describe('timeout-monitor', () => {
 				});
 
 				it('does not change uncleared intervals', () => {
-					expect(timeoutMonitor.report().intervals).toEqual([ intervalId ]);
+					expect(timeoutMonitor.report().intervals).toEqual([
+						[ intervalId, {
+							line: expect.any(Number),
+							char: expect.any(Number),
+							file: 'test/timeout-monitor.test.js'
+						}]
+					]);
 				});
 			});
 		});
@@ -147,8 +159,14 @@ describe('timeout-monitor', () => {
 				expect(timeoutId).toEqual(returnVal);
 			});
 
-			it('adds the returned timeout ID to uncleared timeouts', () => {
-				expect(timeoutMonitor.report().timeouts).toEqual([ timeoutId ]);
+			it('adds the returned timeout to uncleared timeouts', () => {
+				expect(timeoutMonitor.report().timeouts).toEqual([
+					[ timeoutId, {
+						line: expect.any(Number),
+						char: expect.any(Number),
+						file: 'test/timeout-monitor.test.js'
+					}]
+				]);
 			});
 
 			describe('when the timeout triggers (after interval ms)', () => {
@@ -164,7 +182,7 @@ describe('timeout-monitor', () => {
 					expect(callback).toHaveBeenCalledWith(arg1, arg2);
 				});
 
-				it('removes the timeout ID from uncleared timeouts', () => {
+				it('removes the timeout from uncleared timeouts', () => {
 					expect(timeoutMonitor.report().timeouts).toEqual([]);
 				});
 			});
@@ -179,7 +197,7 @@ describe('timeout-monitor', () => {
 					expect(clearTimeout).toHaveBeenCalledWith(timeoutId);
 				});
 
-				it('removes the timeout ID from uncleared timeouts', () => {
+				it('removes the timeout from uncleared timeouts', () => {
 					expect(timeoutMonitor.report().timeouts).toEqual([]);
 				});
 			});
@@ -197,7 +215,13 @@ describe('timeout-monitor', () => {
 				});
 
 				it('does not change uncleared timeouts', () => {
-					expect(timeoutMonitor.report().timeouts).toEqual([ timeoutId ]);
+					expect(timeoutMonitor.report().timeouts).toEqual([
+						[ timeoutId, {
+							line: expect.any(Number),
+							char: expect.any(Number),
+							file: 'test/timeout-monitor.test.js'
+						}]
+					]);
 				});
 			});
 		});
@@ -235,7 +259,7 @@ describe('timeout-monitor', () => {
 		});
 	});
 
-	describe('when restore is called before init', () => {
+	describe('if restore is called before init', () => {
 		function callRestore() {
 			timeoutMonitor.restore();
 		}

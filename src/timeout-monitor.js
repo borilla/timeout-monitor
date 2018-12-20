@@ -1,3 +1,5 @@
+const findCallerLocation = require('./find-caller-location');
+
 function TimeoutMonitor() {
 	this._reset();
 }
@@ -33,8 +35,8 @@ TimeoutMonitor.prototype.restore = function () {
 
 TimeoutMonitor.prototype.report = function () {
 	return {
-		intervals: Array.from(this._intervalIds.keys()),
-		timeouts: Array.from(this._timeoutIds.keys())
+		intervals: Array.from(this._intervals),
+		timeouts: Array.from(this._timeouts)
 	};
 };
 
@@ -45,8 +47,8 @@ TimeoutMonitor.prototype._reset = function () {
 	this._originalClearInterval = null;
 	this._originalSetTimeout = null;
 	this._originalClearTimeout = null;
-	this._intervalIds = new Map();
-	this._timeoutIds = new Map();
+	this._intervals = new Map();
+	this._timeouts = new Map();
 };
 
 TimeoutMonitor.prototype._monitorIntervals = function () {
@@ -54,12 +56,13 @@ TimeoutMonitor.prototype._monitorIntervals = function () {
 
 	monitor._window.setInterval = function (/* callback, interval, ...args */) {
 		const intervalId = monitor._originalSetInterval.apply(this, arguments);
-		monitor._intervalIds.set(intervalId);
+		const callLocation = findCallerLocation('setInterval');
+		monitor._intervals.set(intervalId, callLocation);
 		return intervalId;
 	};
 
 	monitor._window.clearInterval = function (intervalId) {
-		monitor._intervalIds.delete(intervalId);
+		monitor._intervals.delete(intervalId);
 		monitor._originalClearInterval.apply(this, arguments);
 	};
 };
@@ -69,16 +72,17 @@ TimeoutMonitor.prototype._monitorTimeouts = function () {
 
 	monitor._window.setTimeout = function (callback, ...otherArgs) {
 		function newCallback () {
-			monitor._timeoutIds.delete(timeoutId);
+			monitor._timeouts.delete(timeoutId);
 			callback.apply(this, arguments);
 		}
 		const timeoutId = monitor._originalSetTimeout.apply(this, [newCallback, ...otherArgs]);
-		monitor._timeoutIds.set(timeoutId);
+		const callLocation = findCallerLocation('setTimeout');
+		monitor._timeouts.set(timeoutId, callLocation);
 		return timeoutId;
 	}
 
 	monitor._window.clearTimeout = function (timeoutId) {
-		monitor._timeoutIds.delete(timeoutId);
+		monitor._timeouts.delete(timeoutId);
 		monitor._originalClearTimeout.apply(this, arguments);
 	}
 };
