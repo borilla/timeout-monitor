@@ -4,17 +4,17 @@ function TimeoutMonitor() {
 	this._reset();
 }
 
-TimeoutMonitor.prototype.init = function (window) {
+TimeoutMonitor.prototype.init = function (global) {
 	if (this._isInit) {
 		throw Error('Already initialised');
 	}
 
 	this._isInit = true;
-	this._window = window;
-	this._originalSetInterval = window.setInterval;
-	this._originalClearInterval = window.clearInterval;
-	this._originalSetTimeout = window.setTimeout;
-	this._originalClearTimeout = window.clearTimeout;
+	this._global = global;
+	this._originalSetInterval = global.setInterval;
+	this._originalClearInterval = global.clearInterval;
+	this._originalSetTimeout = global.setTimeout;
+	this._originalClearTimeout = global.clearTimeout;
 
 	this._monitorIntervals();
 	this._monitorTimeouts();
@@ -25,10 +25,10 @@ TimeoutMonitor.prototype.restore = function () {
 		throw Error('Not yet initialised');
 	}
 
-	this._window.setInterval = this._originalSetInterval;
-	this._window.clearInterval = this._originalClearInterval;
-	this._window.setTimeout = this._originalSetTimeout;
-	this._window.clearTimeout = this._originalClearTimeout;
+	this._global.setInterval = this._originalSetInterval;
+	this._global.clearInterval = this._originalClearInterval;
+	this._global.setTimeout = this._originalSetTimeout;
+	this._global.clearTimeout = this._originalClearTimeout;
 
 	this._reset();
 };
@@ -42,7 +42,7 @@ TimeoutMonitor.prototype.report = function () {
 
 TimeoutMonitor.prototype._reset = function () {
 	this._isInit = false;
-	this._window = null;
+	this._global = null;
 	this._originalSetInterval = null;
 	this._originalClearInterval = null;
 	this._originalSetTimeout = null;
@@ -54,14 +54,14 @@ TimeoutMonitor.prototype._reset = function () {
 TimeoutMonitor.prototype._monitorIntervals = function () {
 	const monitor = this;
 
-	monitor._window.setInterval = function (/* callback, interval, ...args */) {
+	monitor._global.setInterval = function (/* callback, interval, ...args */) {
 		const intervalId = monitor._originalSetInterval.apply(this, arguments);
 		const callLocation = findCallerLocation('setInterval');
 		monitor._intervals.set(intervalId, callLocation);
 		return intervalId;
 	};
 
-	monitor._window.clearInterval = function (intervalId) {
+	monitor._global.clearInterval = function (intervalId) {
 		monitor._intervals.delete(intervalId);
 		monitor._originalClearInterval.apply(this, arguments);
 	};
@@ -70,7 +70,7 @@ TimeoutMonitor.prototype._monitorIntervals = function () {
 TimeoutMonitor.prototype._monitorTimeouts = function () {
 	const monitor = this;
 
-	monitor._window.setTimeout = function (callback, ...otherArgs) {
+	monitor._global.setTimeout = function (callback, ...otherArgs) {
 		function newCallback () {
 			monitor._timeouts.delete(timeoutId);
 			callback.apply(this, arguments);
@@ -81,7 +81,7 @@ TimeoutMonitor.prototype._monitorTimeouts = function () {
 		return timeoutId;
 	}
 
-	monitor._window.clearTimeout = function (timeoutId) {
+	monitor._global.clearTimeout = function (timeoutId) {
 		monitor._timeouts.delete(timeoutId);
 		monitor._originalClearTimeout.apply(this, arguments);
 	}

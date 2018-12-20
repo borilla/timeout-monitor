@@ -25,7 +25,7 @@ describe('timeout-monitor', () => {
 	});
 
 	describe('when init is called', () => {
-		let mockWindow;
+		let mockGlobal;
 		let clearInterval, clearTimeout, setInterval, setTimeout;
 
 		beforeEach(() => {
@@ -34,29 +34,29 @@ describe('timeout-monitor', () => {
 			clearTimeout = jest.fn();
 			setInterval = jest.fn(function () { return nextId++ });
 			setTimeout = jest.fn(function () { return nextId++ });
-			mockWindow = {
+			mockGlobal = {
 				clearInterval,
 				clearTimeout,
 				setInterval,
 				setTimeout,
 			}
-			timeoutMonitor.init(mockWindow);
+			timeoutMonitor.init(mockGlobal);
 		});
 
-		it('replaces window.setInterval function', () => {
-			expect(mockWindow.setInterval).not.toEqual(setInterval);
+		it('replaces global.setInterval function', () => {
+			expect(mockGlobal.setInterval).not.toEqual(setInterval);
 		});
 
-		it('replaces window.clearInterval function', () => {
-			expect(mockWindow.clearInterval).not.toEqual(clearInterval);
+		it('replaces global.clearInterval function', () => {
+			expect(mockGlobal.clearInterval).not.toEqual(clearInterval);
 		});
 
-		it('replaces window.setTimeout function', () => {
-			expect(mockWindow.setTimeout).not.toEqual(setTimeout);
+		it('replaces global.setTimeout function', () => {
+			expect(mockGlobal.setTimeout).not.toEqual(setTimeout);
 		});
 
-		it('replaces window.clearTimeout function', () => {
-			expect(mockWindow.clearTimeout).not.toEqual(clearTimeout);
+		it('replaces global.clearTimeout function', () => {
+			expect(mockGlobal.clearTimeout).not.toEqual(clearTimeout);
 		});
 
 		it('initially has no uncleared intervals or timeouts', () => {
@@ -72,7 +72,7 @@ describe('timeout-monitor', () => {
 
 			beforeEach(() => {
 				callback = jest.fn();
-				intervalId = mockWindow.setInterval(callback, interval, arg1, arg2);
+				intervalId = mockGlobal.setInterval(callback, interval, arg1, arg2);
 			});
 
 			it('calls the original setInterval function', () => {
@@ -97,7 +97,7 @@ describe('timeout-monitor', () => {
 
 			describe('then clearInterval is called with the returned interval ID', () => {
 				beforeEach(() => {
-					mockWindow.clearInterval(intervalId);
+					mockGlobal.clearInterval(intervalId);
 				});
 
 				it('calls the original clearInterval function', () => {
@@ -114,7 +114,7 @@ describe('timeout-monitor', () => {
 				const unknownIntervalId = 9999;
 
 				beforeEach(() => {
-					mockWindow.clearInterval(unknownIntervalId);
+					mockGlobal.clearInterval(unknownIntervalId);
 				});
 
 				it('still calls the original clearInterval function', () => {
@@ -140,7 +140,7 @@ describe('timeout-monitor', () => {
 
 			beforeEach(() => {
 				callback = jest.fn();
-				timeoutId = mockWindow.setTimeout(callback, timeout, arg1, arg2);
+				timeoutId = mockGlobal.setTimeout(callback, timeout, arg1, arg2);
 				wrappedCallback = setTimeout.mock.calls[0][0];
 			});
 
@@ -189,7 +189,7 @@ describe('timeout-monitor', () => {
 
 			describe('then clearTimeout is called with the returned timeout ID', () => {
 				beforeEach(() => {
-					mockWindow.clearTimeout(timeoutId);
+					mockGlobal.clearTimeout(timeoutId);
 				});
 
 				it('calls the original clearTimeout function', () => {
@@ -206,7 +206,7 @@ describe('timeout-monitor', () => {
 				const unknownTimeoutId = 9999;
 
 				beforeEach(() => {
-					mockWindow.clearTimeout(unknownTimeoutId);
+					mockGlobal.clearTimeout(unknownTimeoutId);
 				});
 
 				it('still calls the original clearTimeout function', () => {
@@ -231,26 +231,26 @@ describe('timeout-monitor', () => {
 				timeoutMonitor.restore();
 			});
 
-			it('restores window.setInterval function', () => {
-				expect(mockWindow.setInterval).toEqual(setInterval);
+			it('restores global.setInterval function', () => {
+				expect(mockGlobal.setInterval).toEqual(setInterval);
 			});
 
-			it('restores window.clearInterval function', () => {
-				expect(mockWindow.clearInterval).toEqual(clearInterval);
+			it('restores global.clearInterval function', () => {
+				expect(mockGlobal.clearInterval).toEqual(clearInterval);
 			});
 
-			it('restores window.setTimeout function', () => {
-				expect(mockWindow.setTimeout).toEqual(setTimeout);
+			it('restores global.setTimeout function', () => {
+				expect(mockGlobal.setTimeout).toEqual(setTimeout);
 			});
 
-			it('restores window.clearTimeout function', () => {
-				expect(mockWindow.clearTimeout).toEqual(clearTimeout);
+			it('restores global.clearTimeout function', () => {
+				expect(mockGlobal.clearTimeout).toEqual(clearTimeout);
 			});
 		});
 
 		describe('if init is called again without restore', () => {
 			function callInit() {
-				timeoutMonitor.init(mockWindow);
+				timeoutMonitor.init(mockGlobal);
 			}
 
 			it('throws an error', () => {
