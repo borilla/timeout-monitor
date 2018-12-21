@@ -12,19 +12,19 @@ describe('timeout-monitor', () => {
 		expect(timeoutMonitor).toBeInstanceOf(TimeoutMonitor);
 	});
 
-	it('has an init function', () => {
-		expect(timeoutMonitor.init).toBeInstanceOf(Function);
+	it('has an attach function', () => {
+		expect(timeoutMonitor.attach).toBeInstanceOf(Function);
 	});
 
 	it('has a report function', () => {
 		expect(timeoutMonitor.report).toBeInstanceOf(Function);
 	});
 
-	it('has a restore function', () => {
-		expect(timeoutMonitor.restore).toBeInstanceOf(Function);
+	it('has a detach function', () => {
+		expect(timeoutMonitor.detach).toBeInstanceOf(Function);
 	});
 
-	describe('when init is called', () => {
+	describe('when attach is called', () => {
 		let mockGlobal;
 		let clearInterval, clearTimeout, setInterval, setTimeout;
 
@@ -40,7 +40,7 @@ describe('timeout-monitor', () => {
 				setInterval,
 				setTimeout,
 			}
-			timeoutMonitor.init(mockGlobal);
+			timeoutMonitor.attach(mockGlobal);
 		});
 
 		it('replaces global.setInterval function', () => {
@@ -226,9 +226,9 @@ describe('timeout-monitor', () => {
 			});
 		});
 
-		describe('then restore is called', () => {
+		describe('then detach is called', () => {
 			beforeEach(() => {
-				timeoutMonitor.restore();
+				timeoutMonitor.detach();
 			});
 
 			it('restores global.setInterval function', () => {
@@ -248,24 +248,59 @@ describe('timeout-monitor', () => {
 			});
 		});
 
-		describe('if init is called again without restore', () => {
-			function callInit() {
-				timeoutMonitor.init(mockGlobal);
+		describe('if attach is called again without detach', () => {
+			function callAttach() {
+				timeoutMonitor.attach(mockGlobal);
 			}
 
 			it('throws an error', () => {
-				expect(callInit).toThrow(Error);
+				expect(callAttach).toThrow(Error);
 			});
 		});
 	});
 
-	describe('if restore is called before init', () => {
-		function callRestore() {
-			timeoutMonitor.restore();
+	describe('if detach is called before attach', () => {
+		function callDetach() {
+			timeoutMonitor.detach();
 		}
 
 		it('throws an error', () => {
-			expect(callRestore).toThrow(Error);
+			expect(callDetach).toThrow(Error);
+		});
+	});
+
+	describe('if constructor is called with an object', () => {
+		let attach, timeoutMonitor, mockGlobal;
+
+		beforeEach(() => {
+			attach = jest.spyOn(TimeoutMonitor.prototype, 'attach');
+			mockGlobal = {
+				clearInterval: jest.fn(),
+				clearTimeout: jest.fn(),
+				setInterval: jest.fn(),
+				setTimeout: jest.fn(),
+			};
+			timeoutMonitor = new TimeoutMonitor(mockGlobal);
+		});
+
+		afterEach(() => {
+			jest.restoreAllMocks();
+		});
+
+		it('calls attach method with the provided object', () => {
+			expect(attach).toHaveBeenCalledTimes(1);
+			expect(attach.mock.instances[0]).toEqual(timeoutMonitor);
+			expect(attach).toHaveBeenCalledWith(mockGlobal);
+		});
+	});
+
+	describe('if attach is called with an object that does not have timeout and interval methods', () => {
+		function attachToObject() {
+			timeoutMonitor.attach({});
+		}
+
+		it('throws an error', () => {
+			expect(attachToObject).toThrow(Error);
 		});
 	});
 });

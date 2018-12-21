@@ -1,15 +1,22 @@
 const findCallerLocation = require('./find-caller-location');
 
-function TimeoutMonitor() {
+function TimeoutMonitor(global) {
 	this._reset();
+	if (global) {
+		this.attach(global);
+	}
 }
 
-TimeoutMonitor.prototype.init = function (global) {
-	if (this._isInit) {
-		throw Error('Already initialised');
+TimeoutMonitor.prototype.attach = function (global) {
+	if (this._isAttached) {
+		throw Error('TimeoutMonitor: Already attached');
 	}
 
-	this._isInit = true;
+	if (!isObjectWithTimeoutMethods(global)) {
+		throw Error('TimeoutMonitor: Not a global object')
+	}
+
+	this._isAttached = true;
 	this._global = global;
 	this._originalSetInterval = global.setInterval;
 	this._originalClearInterval = global.clearInterval;
@@ -20,9 +27,9 @@ TimeoutMonitor.prototype.init = function (global) {
 	this._monitorTimeouts();
 };
 
-TimeoutMonitor.prototype.restore = function () {
-	if (!this._isInit) {
-		throw Error('Not yet initialised');
+TimeoutMonitor.prototype.detach = function () {
+	if (!this._isAttached) {
+		throw Error('TimeoutMonitor: Not yet attached');
 	}
 
 	this._global.setInterval = this._originalSetInterval;
@@ -41,7 +48,7 @@ TimeoutMonitor.prototype.report = function () {
 };
 
 TimeoutMonitor.prototype._reset = function () {
-	this._isInit = false;
+	this._isAttached = false;
 	this._global = null;
 	this._originalSetInterval = null;
 	this._originalClearInterval = null;
@@ -87,15 +94,18 @@ TimeoutMonitor.prototype._monitorTimeouts = function () {
 	}
 };
 
-function removeFromArrayInPlace(array, value) {
-	let toIndex = 0;
-	for (let fromIndex = 0; fromIndex < array.length; ++fromIndex) {
-		if (array[fromIndex] !== value) {
-			array[toIndex] = array[fromIndex];
-			++toIndex;
-		}
-	}
-	array.length = toIndex;
+function isObjectWithTimeoutMethods(global) {
+	return (
+		typeof global === 'object' &&
+		isAFunction(global.setInterval) &&
+		isAFunction(global.clearInterval) &&
+		isAFunction(global.setTimeout) &&
+		isAFunction(global.clearTimeout)
+	);
+}
+
+function isAFunction(fn) {
+	return typeof fn === 'function';
 }
 
 module.exports = TimeoutMonitor;
