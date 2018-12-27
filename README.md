@@ -7,8 +7,8 @@ Monitor `setTimeout` and `setInterval` to help detect uncleared timers
 ## Introduction
 
 `timeout-monitor` is a tool to help detect uncleared timers in your code. It is particularly useful
-when running tests where, apart from using memory and slowing tests down, it is possible that
-uncleared timers could interfere with later tests
+when running tests where uncleared timers can prevent garbage collection, slow tests down, interfere
+with later tests and even prevent the node test process from completing
 
 ## Installation
 
@@ -20,22 +20,33 @@ npm install timeout-monitor
 
 ## Usage
 
-Firstly we need to import the `TimeoutMonitor` class from the `timeout-monitor` module:
+### Import class from package
+
+Firstly we need to import the `TimeoutMonitor` class from the `timeout-monitor` package:
+
+```js
+const TimeoutMonitor = require('timeout-monitor');
+```
+or, using ES6 modules
 
 ```js
 import TimeoutMonitor from 'timeout-monitor';
-/* or */
-const TimeoutMonitor = require('timeout-monitor');
 ```
+
+### Create instance and attach it to global object
 
 Then we need to create an instance of `TimeoutMonitor` and attach it to the `global` or `window`
 object:
 
 ```js
-const monitor = new TimeoutMonitor(window);
-/* or */
 const monitor = new TimeoutMonitor();
 monitor.attach(window);
+```
+
+For convenience we can also supply the global object in the constructor
+
+```js
+const monitor = new TimeoutMonitor(window);
 ```
 
 Attaching `timeout-monitor` replaces the global  `setInterval`, `clearinterval`, `setTimeout` and
@@ -43,17 +54,21 @@ Attaching `timeout-monitor` replaces the global  `setInterval`, `clearinterval`,
 usual by any other code
 
 When a call is made to `setInterval` or `setTimeout`, the monitor will record it and will also
-attempt to record the code location where the call was made. When a timer is cleared or a timeout
-is triggered, the monitor will remove that reference
+record the code location where the call was made. When a timer is cleared or a timeout is triggered,
+the monitor will remove that reference
 
-We can call the `.report()` method at any time to get currently open intervals and timeouts:
+### Get current uncleared timers
+
+We can call the `report()` method at any time to get currently open intervals and timeouts:
 
 ```js
 const report = monitor.report());
 ```
 
+### Detach from global object
+
 Finally, to detach the monitor and restore the original global timer functions, we call the
-`.detach()` method:
+`detach()` method:
 
 ```js
 monitor.detach();
@@ -61,8 +76,8 @@ monitor.detach();
 
 ## Example
 
-To find uncleared timers produced by any test in a test suite, in our global test setup file we can
-add a `beforeEach` and `afterEach` to run before and after every test, eg:
+To find (and clear) uncleared timers produced by any test in a test suite, in our global test setup
+file we can add a `beforeEach` and `afterEach` to run before and after every test, eg:
 
 ```js
 const TimeoutMonitor = require('timeout-monitor');
@@ -78,13 +93,13 @@ afterEach(() => {
     report.intervals.forEach([intervalId, location] => {
         const { file, line, char } = location;
         console.warn('Uncleared call to setInterval at "%s", line %d, column %d', file, line, char);
-        clearInterval(inervalId);
+        window.clearInterval(inervalId);
     });
 
     report.timeouts.forEach([timeoutId, location] => {
         const { file, line, char } = location;
         console.warn('Uncleared call to setTimeout at "%s", line %d, column %d', file, line, char);
-        clearTimeout(timeoutId);
+        window.clearTimeout(timeoutId);
     });
 
     monitor.detach();
