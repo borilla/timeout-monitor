@@ -1,7 +1,8 @@
 const findCallerLocation = require('./find-caller-location');
 
 function TimeoutMonitor(global) {
-	this._reset();
+	this._resetAttachment();
+	this._resetReport();
 	if (global) {
 		this.attach(global);
 	}
@@ -23,6 +24,7 @@ TimeoutMonitor.prototype.attach = function (global) {
 	this._originalSetTimeout = global.setTimeout;
 	this._originalClearTimeout = global.clearTimeout;
 
+	this._resetReport();
 	this._monitorIntervals();
 	this._monitorTimeouts();
 };
@@ -37,7 +39,7 @@ TimeoutMonitor.prototype.detach = function () {
 	this._global.setTimeout = this._originalSetTimeout;
 	this._global.clearTimeout = this._originalClearTimeout;
 
-	this._reset();
+	this._resetAttachment();
 };
 
 TimeoutMonitor.prototype.report = function () {
@@ -47,15 +49,18 @@ TimeoutMonitor.prototype.report = function () {
 	};
 };
 
-TimeoutMonitor.prototype._reset = function () {
+TimeoutMonitor.prototype._resetAttachment = function () {
 	this._isAttached = false;
 	this._global = null;
 	this._originalSetInterval = null;
 	this._originalClearInterval = null;
 	this._originalSetTimeout = null;
 	this._originalClearTimeout = null;
-	this._intervals = new Map();
+};
+
+TimeoutMonitor.prototype._resetReport = function () {
 	this._timeouts = new Map();
+	this._intervals = new Map();
 };
 
 TimeoutMonitor.prototype._monitorIntervals = function () {

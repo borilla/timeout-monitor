@@ -228,6 +228,10 @@ describe('timeout-monitor', () => {
 
 		describe('then detach is called', () => {
 			beforeEach(() => {
+				const callback = jest.fn();
+				const interval = 500;
+				mockGlobal.setInterval(callback, interval);
+				mockGlobal.setTimeout(callback, interval);
 				timeoutMonitor.detach();
 			});
 
@@ -245,6 +249,22 @@ describe('timeout-monitor', () => {
 
 			it('restores global.clearTimeout function', () => {
 				expect(mockGlobal.clearTimeout).toEqual(clearTimeout);
+			});
+
+			it('does not yet reset counts of uncleared timers', ()  => {
+				expect(timeoutMonitor.report().intervals.length).toEqual(1);
+				expect(timeoutMonitor.report().timeouts.length).toEqual(1);
+			});
+
+			describe('then attach is called again', () => {
+				beforeEach(() => {
+					timeoutMonitor.attach(mockGlobal);
+				});
+
+				it('resets count of uncleared timers', () => {
+					expect(timeoutMonitor.report().intervals.length).toEqual(0);
+					expect(timeoutMonitor.report().timeouts.length).toEqual(0);
+				});
 			});
 		});
 
