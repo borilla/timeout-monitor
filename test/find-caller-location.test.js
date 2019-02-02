@@ -39,9 +39,9 @@ describe('findCallerLocation', () => {
 		it('returns the code location where that method was called', () => {
 			result = findCallerLocation('setInterval');
 			expect(result).toEqual({
+				file: 'timeout-monitor/test/timeout-monitor.test.js',
 				line: 75,
-				char: 29,
-				file: `timeout-monitor/test/timeout-monitor.test.js`
+				char: 29
 			});
 		});
 	});

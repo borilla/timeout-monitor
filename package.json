@@ -1,6 +1,6 @@
 {
   "name": "timeout-monitor",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Monitor setTimeout and setInterval to help detect uncleared timers",
   "main": "./src/timeout-monitor.js",
   "files": [
@@ -22,6 +22,11 @@
   ],
   "author": "borilla",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/borilla/timeout-monitor.git"
+  },
+  "homepage": "https://github.com/borilla/timeout-monitor#readme",
   "dependencies": {},
   "devDependencies": {
     "jest": "^23.6.0"
